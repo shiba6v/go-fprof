@@ -41,7 +41,7 @@ func main() {
 
 // # FProf
 // ## About
-// FProf is a simple profiling tool for functions.
+// FProf is a simple function level profiling tool.
 //
 // ## Usage
 // Add
