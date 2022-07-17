@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"runtime"
 	"sort"
@@ -76,10 +77,10 @@ type FProfAnalyzeElement struct {
 }
 
 func InitFProf() { // FPROF_IGNORE
-	FProfStorage = make([]*FProfElement, 0, 1024)
 	FProfStorageMutex = sync.Mutex{}
-	FProfFuncNameMap = make(map[uint16]string)
 	FProfFuncNameMapMutex = sync.RWMutex{}
+	FProfStorage = make([]*FProfElement, 0, 1024)
+	// FProfFuncNameMap = map[uint16]string{}
 }
 
 func FProf() func() { // FPROF_IGNORE
@@ -89,22 +90,34 @@ func FProf() func() { // FPROF_IGNORE
 		fmt.Println("Warning: runtime.Caller(1) failed in FProf()")
 		return func() {} // FPROF_IGNORE
 	}
-	FProfFuncNameMapMutex.RLock()
+	// FProfFuncNameMapMutex.RLock()
+	// _, ok = FProfFuncNameMap[lineNumber]
+	// // TODO: ここの実装は怪しい。
+	// // 書き込みロックをかけるには、読み込みロックを解除しなければならないが、読み込みロックを外した後にほかから読み込まれるかもしれない。
+	// // しかし、全部を書き込みロックで取るのはパフォーマンスを低下させる可能性がある。(ほとんどの場合が読み込みロックで十分なため。)
+	// // 今回はmapに値を入れる冪等な操作なので、panicにさえならなければ良い。
+	// FProfFuncNameMapMutex.RUnlock()
+	// if !ok {
+	// 	FProfFuncNameMapMutex.Lock()
+	// 	funcName := runtime.FuncForPC(pt).Name()
+	// 	FProfFuncNameMap[lineNumber] = funcName
+	// 	FProfFuncNameMapMutex.Unlock()
+	// }
+
+	FProfFuncNameMapMutex.Lock()
+	if FProfFuncNameMap == nil {
+		log.Print("init FProfFuncNameMap")
+		FProfFuncNameMap = map[uint16]string{}
+	}
 	_, ok = FProfFuncNameMap[lineNumber]
-	// TODO: ここの実装は怪しい。
-	// 書き込みロックをかけるには、読み込みロックを解除しなければならないが、読み込みロックを外した後にほかから読み込まれるかもしれない。
-	// しかし、全部を書き込みロックで取るのはパフォーマンスを低下させる可能性がある。(ほとんどの場合が読み込みロックで十分なため。)
-	// 今回はmapに値を入れる冪等な操作なので、panicにさえならなければ良い。
-	FProfFuncNameMapMutex.RUnlock()
 	if !ok {
-		FProfFuncNameMapMutex.Lock()
 		funcName := runtime.FuncForPC(pt).Name()
 		FProfFuncNameMap[lineNumber] = funcName
-		FProfFuncNameMapMutex.Unlock()
 	}
+	FProfFuncNameMapMutex.Unlock()
 
 	t1 := time.Now().UnixNano()
-	return func() {
+	return func() { // FPROF_IGNORE
 		t2 := time.Now().UnixNano()
 		if t2-t1 < 0 {
 			fmt.Println("Warning: t2 < t1 in FProf()")
@@ -178,18 +191,19 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 	for _, line := range lineNumbers {
 		a, ok := aMap[line]
 		if !ok {
-			fmt.Printf("Warning: key %d does not exists in aMap", line)
+			fmt.Printf("Warning: key %d does not exists in aMap %d", line, len(aMap))
+		} else {
+			r := fmt.Sprintf("Sum %12d, Max %12d, Avg %12d, Min %12d, Count %12d, L%d %s\n",
+				a.Sum/1000,
+				a.Max/1000,
+				a.Sum/(1000*a.Count),
+				a.Min/1000,
+				a.Count,
+				line,
+				FProfFuncNameMap[line],
+			)
+			result.WriteString(r)
 		}
-		r := fmt.Sprintf("Sum %8d, Avg %8d, Max %8d, Min %8d, Count %8d, L%d %s\n",
-			a.Sum/1000,
-			a.Sum/(1000*a.Count),
-			a.Max/1000,
-			a.Min/1000,
-			a.Count,
-			line,
-			FProfFuncNameMap[line],
-		)
-		result.WriteString(r)
 	}
 	FProfFuncNameMapMutex.RUnlock()
 	return result.String()
