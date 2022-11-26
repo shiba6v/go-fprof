@@ -3,6 +3,11 @@
 FProfは、シンプルな関数レベルのプロファイリングツールです。
 FProf is a simple function level profiling tool.
 
+## Install
+```bash
+go get github.com/shiba6v/go-fprof@main
+```
+
 ## Usage
 開始時に`fprof.InitFProf()`、各関数の始めに`defer fprof.FProf()()`を付けると、`fprof.AnalizeFProfResult()`でプロファイリング結果を出力します。
 また、`fpr := fprof.FProf()`と`fpr()`で挟むと、好きな区間を計測することもできます。
