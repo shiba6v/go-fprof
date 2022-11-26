@@ -11,50 +11,6 @@ import (
 	"time"
 )
 
-var wg sync.WaitGroup
-
-func A() {
-	defer wg.Done()
-	sum := 0
-	for i := 0; i < 100; i++ {
-		sum += B()
-	}
-	fmt.Println(sum)
-}
-
-func B() int {
-	t := func() int {
-		return 1
-	}()
-	return t
-}
-
-func main() {
-	InitFProf()
-
-	wg.Add(1)
-	go A()
-
-	wg.Wait()
-	r := AnalizeFProfResult()
-	fmt.Println(r)
-}
-
-// # FProf
-// ## About
-// FProf is a simple function level profiling tool.
-//
-// ## Usage
-// Add
-// e.GET("/fprof_result", GetAnalizeFProfResult) // FPROF_CODE
-// to endpoints.
-// Add
-// InitFProf() // FPROF_CODE
-// to main().
-//
-// After benchmark,
-// curl localhost:9000/fprof_result > /tmp/fprof_result.txt
-
 var FProfStorage []*FProfElement
 var FProfStorageMutex sync.Mutex
 
