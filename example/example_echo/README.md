@@ -1,7 +1,8 @@
 ## Example Echo
 
 ```bash
-go run example/example_echo/main.go
+$ cd example
+$ go run example_echo/main.go
 # In another tab,
 $ curl localhost:1323/fuga
 {"fuga":1000}
@@ -16,46 +17,14 @@ Sum           63, Max           63, Avg           63, Min           63, Count   
 Sum          135, Max            6, Avg            0, Min            0, Count         1000, L28 main.Piyo
 ```
 
-以下のような元のコードに対して、
-開始時に`fprof.InitFProf()`、各関数の始めに`defer fprof.FProf()()`を追加し、結果を吐き出すエンドポイント`fprof.AnalizeFProfResult()`を作ってプロファイリングします。
-Piyoでは、`fpr := fprof.FProf()`と`fpr()`で挟むことで、好きな区間を計測します。ただし、シンプルな作り故にオーバーヘッドがそれなりにあります。
+`main.go.original.txt`にあるような元のコードに対して以下の変更を行って、プロファイリングの準備ができた`main.go`にします。
+- 開始時に`fprof.InitFProf()`を付ける
+- 各関数の始めに`defer fprof.FProf()()`を付ける
+- 結果を吐き出すエンドポイント`fprof.AnalizeFProfResult()`を作る。
 
-```go
-package main
-
-import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
-	"github.com/shiba6v/fprof/v1"
-)
-
-func Hoge(c echo.Context) error {
-	t := 1000
-	return c.JSON(http.StatusOK, map[string]int{"hoge": t})
-}
-
-func Fuga(c echo.Context) error {
-	t := 0
-	for i := 0; i < 1000; i++ {
-		t += 1
-	}
-	return c.JSON(http.StatusOK, map[string]int{"fuga": t})
-}
-
-func Piyo(c echo.Context) error {
-	t := 0
-	for i := 0; i < 1000; i++ {
-		t += 1
-	}
-	return c.JSON(http.StatusOK, map[string]int{"fuga": t})
-}
-
-func main() {
-	e := echo.New()
-	e.GET("/hoge", Hoge)
-	e.GET("/fuga", Fuga)
-	e.GET("/piyo", Piyo)
-	e.Logger.Fatal(e.Start(":1323"))
-}
+差分確認
 ```
+diff example/example_echo/main.go example/example_echo/main.go.original.txt 
+```
+
+Piyoでは、`fpr := fprof.FProf()`と`fpr()`で挟むことで、好きな区間を計測します。ただし、シンプルな作り故にオーバーヘッドがそれなりにあります。
