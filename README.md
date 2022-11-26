@@ -9,7 +9,24 @@ go get github.com/shiba6v/go-fprof@main
 ```
 
 ## Usage
-開始時に`fprof.InitFProf()`、各関数の始めに`defer fprof.FProf()()`を付けると、`fprof.AnalizeFProfResult()`でプロファイリング結果を出力します。
+- 開始時に`fprof.InitFProf()`を追加
+- 各関数の始めに`defer fprof.FProf()()`を追加
+- `fprof.AnalizeFProfResult()`でプロファイリング結果を出力
+
+```go
+func A() {
+	defer fprof.FProf()() // 追加。各関数の始めに付ける。
+	// some process
+	time.Sleep(1 * time.Second)
+}
+
+func main() {
+	fprof.InitFProf() // 追加。開始時の初期化。
+	A()
+	fmt.Println(fprof.AnalizeFProfResult()) // 追加。プロファイリング結果を出力。
+}
+```
+
 また、`fpr := fprof.FProf()`と`fpr()`で挟むと、好きな区間を計測することもできます。
 
 基本的な使い方は、 [Example Goroutine](https://github.com/shiba6v/go-fprof/tree/main/example/example_goroutine) を参照してください。
