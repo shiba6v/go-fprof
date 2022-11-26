@@ -1,6 +1,6 @@
 # FProf
 ## About
-FProfは、シンプルな関数レベルのプロファイリングツールです。
+FProfは、シンプルな関数レベルのプロファイリングツールです。  
 FProf is a simple function level profiling tool.
 
 ## Install
@@ -27,10 +27,16 @@ func main() {
 }
 ```
 
-また、`fpr := fprof.FProf()`と`fpr()`で挟むと、好きな区間を計測することもできます。
+結果
+```
+FProf Result [us]
+Sum      1000883, Max      1000883, Avg      1000883, Min      1000883, Count            1, L11 main.A
+```
 
 基本的な使い方は、 [Example Goroutine](https://github.com/shiba6v/go-fprof/tree/main/example/example_goroutine) を参照してください。
 ISUCONなど、サーバーで使う場合は [Example Echo](https://github.com/shiba6v/go-fprof/tree/main/example/example_echo) を参照してください。
+
+`fpr := fprof.FProf()`と`fpr()`で挟むと、好きな区間を計測することもできます。
 
 ## Disclaimer
 破壊的変更を入れる際は新しいバージョンのディレクトリを切ろうと思いますが、ISUCONなどでの使用時に挙動が変わっても責任は取れません。
