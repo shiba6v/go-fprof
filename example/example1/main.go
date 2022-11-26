@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sync"
+
+	"github.com/shiba6v/fprof/v1"
 )
 
 var wg sync.WaitGroup
