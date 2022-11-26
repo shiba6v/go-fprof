@@ -2,7 +2,6 @@ package fprof
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"runtime"
 	"sort"
@@ -62,7 +61,6 @@ func FProf() func() { // FPROF_IGNORE
 
 	FProfFuncNameMapMutex.Lock()
 	if FProfFuncNameMap == nil {
-		log.Print("init FProfFuncNameMap")
 		FProfFuncNameMap = map[uint16]string{}
 	}
 	_, ok = FProfFuncNameMap[lineNumber]
