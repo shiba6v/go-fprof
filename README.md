@@ -1,14 +1,11 @@
 # FProf
 ## About
+FProfは、シンプルな関数レベルのプロファイリングツールです。
 FProf is a simple function level profiling tool.
 
-## Usage
-Add
-e.GET("/fprof_result", GetAnalizeFProfResult) // FPROF_CODE
-to endpoints.
-Add
-InitFProf() // FPROF_CODE
-to main().
 
-After benchmark,
-curl localhost:9000/fprof_result > /tmp/fprof_result.txt
+## Usage
+
+
+## Disclaimer
+破壊的変更を入れる際は新しいバージョンのディレクトリを切ろうと思いますが、ISUCONなどでの使用時に挙動が変わっても責任は取れませんので、コミットハッシュを指定しての使用や、forkして使うことを推奨します。

@@ -1,10 +1,13 @@
+## Example Goroutine
+以下のような元のコードに対して、
+開始時に`fprof.InitFProf()`、終了時に`r := fprof.AnalizeFProfResult(); fmt.Println(r)`、各関数の始めに`defer fprof.FProf()()`を付けてプロファイリングします。
+
+```go
 package main
 
 import (
 	"fmt"
 	"sync"
-
-	"github.com/shiba6v/fprof/v1"
 )
 
 var wg sync.WaitGroup
@@ -26,12 +29,9 @@ func B() int {
 }
 
 func main() {
-	fprof.InitFProf()
-
 	wg.Add(1)
 	go A()
-
 	wg.Wait()
-	r := fprof.AnalizeFProfResult()
-	fmt.Println(r)
 }
+
+```
