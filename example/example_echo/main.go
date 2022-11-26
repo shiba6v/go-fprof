@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/shiba6v/fprof/v1"
+	"github.com/shiba6v/fprof"
 )
 
 func Hoge(c echo.Context) error {

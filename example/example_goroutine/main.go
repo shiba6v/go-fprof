@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/shiba6v/fprof/v1"
+	"github.com/shiba6v/fprof"
 )
 
 var wg sync.WaitGroup
