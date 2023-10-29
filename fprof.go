@@ -5,6 +5,7 @@ import (
 	"math"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -169,7 +170,7 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 	}
 	format := make(map[string]string)
 	for k, v := range maxValues {
-		format[k] = "%" + string(int(math.Floor(math.Log10(float64(v))))) + "d"
+		format[k] = "%" + strconv.Itoa(int(math.Floor(math.Log10(float64(v))))) + "d"
 	}
 	for _, line := range lineNumbers {
 		a, ok := aMap[line]
@@ -178,9 +179,9 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 			continue
 		}
 		r := fmt.Sprintf("Sum "+format["Sum"]+", "+
-			"Max "+format["Max"]+"d, "+
-			"Avg "+format["Avg"]+"d, "+
-			"Min "+format["Min"]+"d, "+
+			"Max "+format["Max"]+", "+
+			"Avg "+format["Avg"]+", "+
+			"Min "+format["Min"]+", "+
 			"Count "+format["Count"]+"d, "+
 			"%s:L%d\n",
 			a.Sum/1000,
