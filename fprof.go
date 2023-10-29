@@ -5,6 +5,7 @@ import (
 	"math"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +30,10 @@ type FProfAnalyzeElement struct {
 	Count uint64
 	Max   uint32
 	Min   uint32
+}
+
+func (a FProfAnalyzeElement) getAvg() uint64 {
+	return a.Sum / (a.Count)
 }
 
 func InitFProf() { // FPROF_IGNORE
@@ -83,6 +88,14 @@ func FProf() func() { // FPROF_IGNORE
 		FProfStorageMutex.Lock()
 		FProfStorage = append(FProfStorage, &s)
 		FProfStorageMutex.Unlock()
+	}
+}
+
+func FProfMaxUint64(x uint64, y uint64) uint64 { // FPROF_IGNORE
+	if x > y {
+		return x
+	} else {
+		return y
 	}
 }
 
@@ -142,22 +155,44 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 	result := strings.Builder{}
 	result.WriteString("FProf Result [us]\n")
 	FProfFuncNameMapMutex.RLock()
+	maxValues := make(map[string]uint64)
+	for _, line := range lineNumbers {
+		a, ok := aMap[line]
+		maxValues["Sum"] = FProfMaxUint64(a.Sum/1000, maxValues["Sum"])
+		maxValues["Max"] = FProfMaxUint64(uint64(a.Max/1000), maxValues["Max"])
+		maxValues["Avg"] = FProfMaxUint64(uint64(a.getAvg()/1000), maxValues["Avg"])
+		maxValues["Min"] = FProfMaxUint64(uint64(a.Min/1000), maxValues["Min"])
+		maxValues["Count"] = FProfMaxUint64(uint64(a.Min/1000), maxValues["Count"])
+		if !ok {
+			fmt.Printf("Warning: key %d does not exists in aMap %d", line, len(aMap))
+			continue
+		}
+	}
+	format := make(map[string]string)
+	for k, v := range maxValues {
+		format[k] = "%" + strconv.Itoa(1+int(math.Floor(math.Log10(float64(v))))) + "d"
+	}
 	for _, line := range lineNumbers {
 		a, ok := aMap[line]
 		if !ok {
 			fmt.Printf("Warning: key %d does not exists in aMap %d", line, len(aMap))
-		} else {
-			r := fmt.Sprintf("Sum %12d, Max %12d, Avg %12d, Min %12d, Count %12d, L%d %s\n",
-				a.Sum/1000,
-				a.Max/1000,
-				a.Sum/(1000*a.Count),
-				a.Min/1000,
-				a.Count,
-				line,
-				FProfFuncNameMap[line],
-			)
-			result.WriteString(r)
+			continue
 		}
+		r := fmt.Sprintf("Sum "+format["Sum"]+", "+
+			"Max "+format["Max"]+", "+
+			"Avg "+format["Avg"]+", "+
+			"Min "+format["Min"]+", "+
+			"Count "+format["Count"]+", "+
+			"%s:L%d\n",
+			a.Sum/1000,
+			a.Max/1000,
+			a.getAvg()/1000,
+			a.Min/1000,
+			a.Count,
+			FProfFuncNameMap[line],
+			line,
+		)
+		result.WriteString(r)
 	}
 	FProfFuncNameMapMutex.RUnlock()
 	return result.String()
