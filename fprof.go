@@ -170,7 +170,7 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 	}
 	format := make(map[string]string)
 	for k, v := range maxValues {
-		format[k] = "%" + strconv.Itoa(int(math.Floor(math.Log10(float64(v))))) + "d"
+		format[k] = "%" + strconv.Itoa(1+int(math.Floor(math.Log10(float64(v))))) + "d"
 	}
 	for _, line := range lineNumbers {
 		a, ok := aMap[line]
@@ -182,7 +182,7 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 			"Max "+format["Max"]+", "+
 			"Avg "+format["Avg"]+", "+
 			"Min "+format["Min"]+", "+
-			"Count "+format["Count"]+"d, "+
+			"Count "+format["Count"]+", "+
 			"%s:L%d\n",
 			a.Sum/1000,
 			a.Max/1000,
