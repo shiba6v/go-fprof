@@ -162,7 +162,7 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 		maxValues["Max"] = FProfMaxUint64(uint64(a.Max/1000), maxValues["Max"])
 		maxValues["Avg"] = FProfMaxUint64(uint64(a.getAvg()/1000), maxValues["Avg"])
 		maxValues["Min"] = FProfMaxUint64(uint64(a.Min/1000), maxValues["Min"])
-		maxValues["Count"] = FProfMaxUint64(uint64(a.Min/1000), maxValues["Count"])
+		maxValues["Count"] = FProfMaxUint64(uint64(a.Count), maxValues["Count"])
 		if !ok {
 			fmt.Printf("Warning: key %d does not exists in aMap %d", line, len(aMap))
 			continue
