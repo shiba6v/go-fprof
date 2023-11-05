@@ -19,6 +19,8 @@ var FProfStorageMutex sync.Mutex
 var FProfFuncNameMap map[uint16]string
 var FProfFuncNameMapMutex sync.RWMutex
 
+var initialized bool
+
 type FProfElement struct {
 	// Elementあたり10 Byteで、100万回呼ばれても10MBなのでメモリに乗せても大丈夫。
 	LineNumber  uint16
@@ -36,34 +38,24 @@ func (a FProfAnalyzeElement) getAvg() uint64 {
 	return a.Sum / (a.Count)
 }
 
-func InitFProf() { // FPROF_IGNORE
+func InitFProf() {
 	FProfStorageMutex = sync.Mutex{}
 	FProfFuncNameMapMutex = sync.RWMutex{}
 	FProfStorage = make([]*FProfElement, 0, 1024)
+	initialized = true
 	// FProfFuncNameMap = map[uint16]string{}
 }
 
-func FProf() func() { // FPROF_IGNORE
+func FProf() func() {
+	if !initialized {
+		return func() {}
+	}
 	pt, _, l, ok := runtime.Caller(1)
 	lineNumber := uint16(l)
 	if !ok {
 		fmt.Println("Warning: runtime.Caller(1) failed in FProf()")
-		return func() {} // FPROF_IGNORE
+		return func() {}
 	}
-	// FProfFuncNameMapMutex.RLock()
-	// _, ok = FProfFuncNameMap[lineNumber]
-	// // TODO: ここの実装は怪しい。
-	// // 書き込みロックをかけるには、読み込みロックを解除しなければならないが、読み込みロックを外した後にほかから読み込まれるかもしれない。
-	// // しかし、全部を書き込みロックで取るのはパフォーマンスを低下させる可能性がある。(ほとんどの場合が読み込みロックで十分なため。)
-	// // 今回はmapに値を入れる冪等な操作なので、panicにさえならなければ良い。
-	// FProfFuncNameMapMutex.RUnlock()
-	// if !ok {
-	// 	FProfFuncNameMapMutex.Lock()
-	// 	funcName := runtime.FuncForPC(pt).Name()
-	// 	FProfFuncNameMap[lineNumber] = funcName
-	// 	FProfFuncNameMapMutex.Unlock()
-	// }
-
 	FProfFuncNameMapMutex.Lock()
 	if FProfFuncNameMap == nil {
 		FProfFuncNameMap = map[uint16]string{}
@@ -76,7 +68,7 @@ func FProf() func() { // FPROF_IGNORE
 	FProfFuncNameMapMutex.Unlock()
 
 	t1 := time.Now().UnixNano()
-	return func() { // FPROF_IGNORE
+	return func() {
 		t2 := time.Now().UnixNano()
 		if t2-t1 < 0 {
 			fmt.Println("Warning: t2 < t1 in FProf()")
@@ -91,7 +83,7 @@ func FProf() func() { // FPROF_IGNORE
 	}
 }
 
-func FProfMaxUint64(x uint64, y uint64) uint64 { // FPROF_IGNORE
+func FProfMaxUint64(x uint64, y uint64) uint64 {
 	if x > y {
 		return x
 	} else {
@@ -99,7 +91,7 @@ func FProfMaxUint64(x uint64, y uint64) uint64 { // FPROF_IGNORE
 	}
 }
 
-func FProfMaxUint32(x uint32, y uint32) uint32 { // FPROF_IGNORE
+func FProfMaxUint32(x uint32, y uint32) uint32 {
 	if x > y {
 		return x
 	} else {
@@ -107,7 +99,7 @@ func FProfMaxUint32(x uint32, y uint32) uint32 { // FPROF_IGNORE
 	}
 }
 
-func FProfMinUint32(x uint32, y uint32) uint32 { // FPROF_IGNORE
+func FProfMinUint32(x uint32, y uint32) uint32 {
 	if x < y {
 		return x
 	} else {
@@ -115,7 +107,7 @@ func FProfMinUint32(x uint32, y uint32) uint32 { // FPROF_IGNORE
 	}
 }
 
-func analyzeFProfResultAggregate() map[uint16]*FProfAnalyzeElement { // FPROF_IGNORE
+func analyzeFProfResultAggregate() map[uint16]*FProfAnalyzeElement {
 	FProfStorageMutex.Lock()
 	aMap := make(map[uint16]*FProfAnalyzeElement)
 	for _, p := range FProfStorage {
@@ -138,20 +130,20 @@ func analyzeFProfResultAggregate() map[uint16]*FProfAnalyzeElement { // FPROF_IG
 	return aMap
 }
 
-func analyzeFProfResultGetLineNumbers() []uint16 { // FPROF_IGNORE
+func analyzeFProfResultGetLineNumbers() []uint16 {
 	lineNumbers := []uint16{}
 	FProfFuncNameMapMutex.Lock()
 	for k := range FProfFuncNameMap {
 		lineNumbers = append(lineNumbers, k)
 	}
 	FProfFuncNameMapMutex.Unlock()
-	sort.Slice(lineNumbers, func(i int, j int) bool { // FPROF_IGNORE
+	sort.Slice(lineNumbers, func(i int, j int) bool {
 		return lineNumbers[i] < lineNumbers[j]
 	})
 	return lineNumbers
 }
 
-func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfAnalyzeElement) string { // FPROF_IGNORE
+func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfAnalyzeElement) string {
 	result := strings.Builder{}
 	result.WriteString("FProf Result [us]\n")
 	FProfFuncNameMapMutex.RLock()
@@ -198,7 +190,7 @@ func analyzeFProfResultBuildResult(lineNumbers []uint16, aMap map[uint16]*FProfA
 	return result.String()
 }
 
-func AnalizeFProfResult() string { // FPROF_IGNORE
+func AnalizeFProfResult() string {
 	// line number to aggregated time information.
 	aMap := analyzeFProfResultAggregate()
 	// line numbers of target functions
@@ -208,7 +200,7 @@ func AnalizeFProfResult() string { // FPROF_IGNORE
 	return result
 }
 
-// func GetAnalizeFProfResult(c echo.Context) error { // FPROF_IGNORE
+// func GetAnalizeFProfResult(c echo.Context) error {
 // 	result := AnalizeFProfResult()
 // 	return c.String(http.StatusOK, result)
 // }
